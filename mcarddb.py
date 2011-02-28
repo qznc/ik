@@ -23,7 +23,7 @@ class IndexDatabase:
       doc.set_data(p)
       indexer.set_document(doc)
       indexer.index_text_without_positions(mcard.text)
-      for k,v in mcard.props.items():
+      for k,v in mcard.items():
          indexer.index_text_without_positions(v)
       self._db.add_document(doc)
    def search(self, query):
@@ -54,7 +54,8 @@ class CardHolder:
    def load(self,cid):
       return load_file(self._cid2path(cid))
    def store(self,card):
-      card.store(self.path)
+      path = card.store(self.path)
+      self.indexdb.indexFile(path)
    def update_index(self):
       self.indexdb.index(self.path)
    def delete(self, cid):

@@ -55,7 +55,7 @@ def _parse_line(line, last=None):
 def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
    last_key = None
    text = ""
-   props = dict()
+   props = list()
    while True:
       line = f.readline().decode(encoding)
       if not line: break
@@ -65,7 +65,7 @@ def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
          text = f.read().decode(encoding).strip()
          break
       else:
-         props[key] = value
+         props.append((key, value))
       last_key = key
    return MCard(props, text)
 
@@ -73,34 +73,36 @@ class MCard:
    def __init__(self, props=None, text=""):
       if not props:
          props = dict()
-      self.props = props
+      self._props = props
       self.text = text
    def __str__(self):
       string = u""
-      for kv in self.props.items():
+      for kv in self._props:
          string += "%s:%s\n" % kv
       string += "\n"
       string += self.text
       return string
    def __getitem__(self, key):
-      try:
-         return self.props[key]
-      except KeyError, e:
-         for k in self.props.keys():
-            if k.startswith(key+","):
-               return self.props[k]
-         raise e
+      for k,v in self._props:
+         if k == key:
+            return v
+         elif k.startswith(key+","):
+            return v
+      raise KeyError(key)
    def __setitem__(self, key, value):
-      self.props[key] = value
+      self._props[key] = value
    def get(self, key, default):
       try:
          return self.__getitem__(key)
       except KeyError:
          return default
+   def items(self):
+      for x in self._props:
+         yield x
    def getAll(self, key):
-      for k in self.props.keys():
+      for k,v in self._props:
          if k==key or k.startswith(key+","):
-            yield self.props[k]
+            yield v
    def store(self, sdir):
       string = self.__str__().encode(DEFAULT_ENCODING)
       hsh = hashlib.sha256(string).hexdigest()

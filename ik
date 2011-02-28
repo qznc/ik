@@ -31,12 +31,16 @@ def do_merge(args):
    holder = CardHolder(_BASE)
    cardA = holder.load(cidA)
    cardB = holder.load(cidB)
-   cardC = MCard()
-   cardC.props.update(cardA.props)
-   cardC.props.update(cardB.props)
-   cardC.text = cardA.text + "\n\b" + cardB.text
+   props = list(cardA.items())
+   for k,v in cardB.items():
+      if cardA[k] != v:
+         props.append((k,v))
+   cardC = MCard(props)
+   cardC.text = cardA.text
+   if cardB.text:
+      cardC.text += "\n\b" + cardB.text
+   cardC.text = cardC.text.strip()
    holder.store(cardC)
-   print cardC
    holder.delete(cidA)
    holder.delete(cidB)
 

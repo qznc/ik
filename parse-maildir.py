@@ -4,7 +4,8 @@ import sys
 from glob import iglob
 import email.header
 
-from mcard import MCard, Database, load_file
+from mcard import MCard, load_file
+from mcarddb import IndexDatabase
 
 def parseaddr(mailaddr):
    comment, addr = email.Utils.parseaddr(mailaddr)
@@ -21,7 +22,7 @@ def insert(full_addr, db, outputdir):
    if not full_addr: return
    name, addr = parseaddr(full_addr)
    if not addr: return
-   results = db.search(addr)
+   results = list(db.search(addr))
    if len(results) > 0:
       for p in results:
          card = load_file(p)
@@ -41,7 +42,7 @@ if __name__ == "__main__":
    maildir = os.path.abspath(maildir)
    outputdir = os.path.abspath(outputdir)
    dbdir = os.path.abspath(dbdir)
-   db = Database(dbdir)
+   db = IndexDatabase(dbdir)
    for p in iglob(maildir+"/*"):
       mail = email.message_from_file(open(p))
       insert(mail["From"], db, outputdir)
