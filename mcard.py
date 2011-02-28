@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import hashlib
+import os
+from glob import iglob
 
 """
 Key Spec:
@@ -68,11 +70,13 @@ def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
    return MCard(props, text)
 
 class MCard:
-   def __init__(self, props, text=""):
+   def __init__(self, props=None, text=""):
+      if not props:
+         props = dict()
       self.props = props
       self.text = text
    def __str__(self):
-      string = ""
+      string = u""
       for kv in self.props.items():
          string += "%s:%s\n" % kv
       string += "\n"
@@ -93,8 +97,12 @@ class MCard:
          return self.__getitem__(key)
       except KeyError:
          return default
+   def getAll(self, key):
+      for k in self.props.keys():
+         if k==key or k.startswith(key+","):
+            yield self.props[k]
    def store(self, sdir):
-      string = str(self).encode(DEFAULT_ENCODING)
+      string = self.__str__().encode(DEFAULT_ENCODING)
       hsh = hashlib.sha256(string).hexdigest()
       filename = hsh + ".mcard"
       # create an temporary dot file
@@ -104,44 +112,6 @@ class MCard:
       fh.write(string)
       fh.close()
       path = os.path.join(sdir, filename)
-      os.rename(tmpf, path)
+      os.rename(tmppath, path)
       return path
 
-import xapian
-
-class Database:
-   def __init__(self, path):
-      self._db = xapian.WritableDatabase(path, xapian.DB_CREATE_OR_OPEN)
-   def index(self, directory):
-      indexer = xapian.TermGenerator()
-      stemmer = xapian.Stem("english")
-      indexer.set_stemmer(stemmer)
-      for p in iglob("%s/*.mcard" % directory):
-         mcard = load_file(p)
-         doc = xapian.Document()
-         doc.set_data(p)
-         indexer.set_document(doc)
-         indexer.index_text_without_positions(mcard.text)
-         for k,v in mcard.props.items():
-            indexer.index_text_without_positions(v)
-         self._db.add_document(doc)
-   def search(self, query):
-      enquire = xapian.Enquire(self._db)
-      qp = xapian.QueryParser()
-      stemmer = xapian.Stem("english")
-      qp.set_stemmer(stemmer)
-      qp.set_database(self._db)
-      qp.set_stemming_strategy(xapian.QueryParser.STEM_SOME)
-      query = qp.parse_query(query, xapian.QueryParser.FLAG_WILDCARD)
-      enquire.set_query(query)
-      matches = enquire.get_mset(0, 10)
-      return set([m.document.get_data() for m in matches])
-
-if __name__ == "__main__":
-   from glob import iglob
-   for p in iglob("tests/*.mcard"):
-      c = load_file(p)
-   db = Database("xapian.db")
-   db.index("tests")
-   me = load_file(db.search("zwin*").pop())
-   print me["name,business"]
