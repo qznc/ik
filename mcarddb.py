@@ -7,13 +7,7 @@ from mcard import load_file
 class IndexDatabase:
    def __init__(self, path):
       self._db = xapian.WritableDatabase(path, xapian.DB_CREATE_OR_OPEN)
-   def index(self, directory):
-      indexer = xapian.TermGenerator()
-      stemmer = xapian.Stem("english")
-      indexer.set_stemmer(stemmer)
-      for p in iglob("%s/*.mcard" % directory):
-         self.indexFile(p)
-   def indexFile(self, p, indexer=None):
+   def indexFile(self, p, indexer=None, docid=None):
       if not indexer:
          indexer = xapian.TermGenerator()
          stemmer = xapian.Stem("english")
@@ -25,7 +19,10 @@ class IndexDatabase:
       indexer.index_text_without_positions(mcard.text)
       for k,v in mcard.items():
          indexer.index_text_without_positions(v)
-      self._db.add_document(doc)
+      if docid:
+         self._db.replace_document(docid, doc)
+      else:
+         self._db.add_document(doc)
    def search(self, query):
       enquire = xapian.Enquire(self._db)
       qp = xapian.QueryParser()
@@ -35,7 +32,7 @@ class IndexDatabase:
       qp.set_stemming_strategy(xapian.QueryParser.STEM_SOME)
       query = qp.parse_query(query, xapian.QueryParser.FLAG_WILDCARD)
       enquire.set_query(query)
-      matches = enquire.get_mset(0, 10)
+      matches = enquire.get_mset(0, 100)
       for m in matches:
          path = m.document.get_data()
          if os.path.exists(path):
@@ -55,11 +52,16 @@ class CardHolder:
       return load_file(self._cid2path(cid))
    def store(self,card):
       path = card.store(self.path)
-      self.indexdb.indexFile(path)
+      docid = self._path2cid(path)
+      self.indexdb.indexFile(path, docid=docid)
    def update_index(self):
-      self.indexdb.index(self.path)
+      for p in iglob("%s/*.mcard" % self.path):
+         docid = self._path2cid(p)
+         self.indexdb.indexFile(p, docid=docid)
    def delete(self, cid):
       os.remove(self._cid2path(cid))
+   def _path2cid(self, path):
+      return os.path.basename(path)[:-6]
    def _cid2path(self, cid):
       return os.path.join(self.path, cid+".mcard")
 

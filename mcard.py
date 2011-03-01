@@ -72,7 +72,7 @@ def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
 class MCard:
    def __init__(self, props=None, text=""):
       if not props:
-         props = dict()
+         props = list()
       self._props = props
       self.text = text
    def __str__(self):
@@ -90,7 +90,11 @@ class MCard:
             return v
       raise KeyError(key)
    def __setitem__(self, key, value):
-      self._props[key] = value
+      for kv in self._props:
+         if kv[0]==key:
+            kv[1] = value
+            return
+      self._props.append((key,value))
    def get(self, key, default):
       try:
          return self.__getitem__(key)
