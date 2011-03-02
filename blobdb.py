@@ -46,6 +46,7 @@ class IndexedDatabase:
    def _indexBlob(self, blob, ids, extract):
       self.delete(ids) # no duplicates!
       doc = xapian.Document()
+      assert len("Q"+ids) <= 245 # xapian restriction
       doc.add_term("Q"+ids)
       doc.set_data(ids)
       indexer = xapian.TermGenerator()
