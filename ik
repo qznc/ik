@@ -46,20 +46,17 @@ def do_merge(args):
    for cid in args:
       holder.delete(cid)
 
-def _parseaddr(mailaddr):
-   comment, addr = email.Utils.parseaddr(mailaddr)
-   parts = email.header.decode_header(comment)
+def _decode_name(string):
+   parts = email.header.decode_header(string)
    name = ""
    for data, encoding in parts:
       if encoding:
          name += data.decode(encoding)
       else:
          name += data
-   return name, addr
+   return name
 
-def _insert(full_addr, holder):
-   if not full_addr: return
-   name, addr = _parseaddr(full_addr)
+def _insert(name, addr, holder):
    if not addr: return
    found = holder.search(addr)
    for cid in found:
@@ -68,6 +65,7 @@ def _insert(full_addr, holder):
          return # already in there
    card = MCard()
    if name:
+      name = _decode_name(name)
       card["name"] = name
    card["email"] = addr
    holder.put(card)
@@ -78,8 +76,13 @@ def do_import_maildir(args):
    maildir = os.path.abspath(args[0])
    for p in iglob(maildir+"/*"):
       mail = email.message_from_file(open(p))
-      _insert(mail["From"], holder)
-      _insert(mail["To"], holder)
+      fields = list()
+      for f in ("From", "To", "Cc", "Bcc"):
+         if mail[f]:
+            fields.append(mail[f])
+      addresses = email.utils.getaddresses(fields)
+      for name,addr in addresses:
+         _insert(name, addr, holder)
 
 def main(args):
    cmd = args.pop(0)
