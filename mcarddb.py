@@ -6,9 +6,9 @@ from mcard import load_file, parse_string
 from blobdb import IndexedDatabase
 
 class CardHolder:
-   def __init__(self,path):
+   def __init__(self,path,readonly=False):
       self.path = path
-      self._db = IndexedDatabase(path)
+      self._db = IndexedDatabase(path,readonly=readonly)
    def search(self,query):
       for cid in self._db.search(query):
          yield cid

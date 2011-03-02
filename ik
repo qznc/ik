@@ -15,7 +15,7 @@ where <cmd> is one of: search, show, merge, import-maildir
 
 def do_search(args):
    query = " ".join(args)
-   holder = CardHolder(_BASE)
+   holder = CardHolder(_BASE, readonly=True)
    results = holder.search(query)
    for cid in results:
       card = holder.get(cid)
@@ -25,7 +25,7 @@ def do_search(args):
       print cid, name
 
 def do_show(args):
-   holder = CardHolder(_BASE)
+   holder = CardHolder(_BASE, readonly=True)
    print holder.get(args[0])
 
 def do_merge(args):

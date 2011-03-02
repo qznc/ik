@@ -10,12 +10,15 @@ def string_extract(indexer, string):
    indexer.index_text(string)
 
 class IndexedDatabase:
-   def __init__(self, path):
+   def __init__(self, path, readonly=False):
       self.path = path
       if not os.path.isdir(path):
          os.makedirs(path)
       self.dbpath = os.path.join(path,"index.db")
-      self._db = xapian.WritableDatabase(self.dbpath, xapian.DB_CREATE_OR_OPEN)
+      if readonly:
+         self._db = xapian.Database(self.dbpath)
+      else:
+         self._db = xapian.WritableDatabase(self.dbpath, xapian.DB_CREATE_OR_OPEN)
    def put(self, blob, extract=string_extract):
       ids = self._gen_ids(blob)
       self._storeBlob(blob, ids)
