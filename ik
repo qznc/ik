@@ -19,11 +19,14 @@ def do_search(args):
    results = holder.search(query)
    for cid in results:
       card = holder.get(cid)
-      print cid, card.get("name", "?")
+      name = card.get("name", None)
+      if not name:
+         name = card.get("email", "?")
+      print cid, name
 
 def do_show(args):
    holder = CardHolder(_BASE)
-   print holder.load(args[0])
+   print holder.get(args[0])
 
 def do_merge(args):
    new_card = MCard()
