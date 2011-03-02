@@ -27,6 +27,11 @@ class IndexedDatabase:
    def get(self, ids):
       assert not ids.endswith(".blob")
       return open(self._gen_path(ids)).read()
+   def completeIds(self, ids_start):
+      for path in iglob(self._gen_path("*")):
+         cid = os.path.basename(path)[:-5]
+         if cid.startswith(ids_start):
+            yield cid
    def _gen_ids(self, string):
       return hashlib.sha256(string).hexdigest()
    def _gen_path(self, ids):

@@ -12,7 +12,13 @@ class CardHolder:
    def search(self,query):
       for cid in self._db.search(query):
          yield cid
+   def _complete(self, cid_start):
+      cids = list(self._db.completeIds(cid_start))
+      if len(cids) != 1:
+         raise Exception("Ambiguous cid: "+cid_start)
+      return cids[0]
    def get(self,cid):
+      cid = self._complete(cid)
       return parse_string(self._db.get(cid))
    def put(self,card):
       def extract(indexer, dummy):
@@ -21,5 +27,6 @@ class CardHolder:
             indexer.index_text(v)
       return self._db.put(str(card), extract=extract)
    def delete(self, cid):
+      cid = self._complete(cid)
       self._db.delete(cid)
 
