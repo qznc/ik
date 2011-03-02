@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 import sys
+import os
+import email.header
+from glob import iglob
+
 from mcarddb import CardHolder
 from mcard import MCard
 
 _BASE="/home/beza1e1/dev/mycontacts/tests"
 _USAGE="""\
 Usage: %s <cmd> ...
-where <cmd> is one of: search, show, update-index, merge
+where <cmd> is one of: search, show, merge, import-maildir
 """ % sys.argv[0]
 
 def do_search(args):
@@ -14,35 +18,65 @@ def do_search(args):
    holder = CardHolder(_BASE)
    results = holder.search(query)
    for cid in results:
-      card = holder.load(cid)
+      card = holder.get(cid)
       print cid, card.get("name", "?")
 
 def do_show(args):
    holder = CardHolder(_BASE)
    print holder.load(args[0])
 
-def do_update_index(args):
-   holder = CardHolder(_BASE)
-   holder.update_index()
-
 def do_merge(args):
-   cidA = args[0]
-   cidB = args[1]
+   new_card = MCard()
    holder = CardHolder(_BASE)
-   cardA = holder.load(cidA)
-   cardB = holder.load(cidB)
-   props = list(cardA.items())
-   for k,v in cardB.items():
-      if cardA[k] != v:
-         props.append((k,v))
-   cardC = MCard(props)
-   cardC.text = cardA.text
-   if cardB.text:
-      cardC.text += "\n\b" + cardB.text
-   cardC.text = cardC.text.strip()
-   holder.store(cardC)
-   holder.delete(cidA)
-   holder.delete(cidB)
+   for cid in args:
+      c = holder.get(cid)
+      for k,v in list(c.items()):
+         if new_card.get(k, None) != v:
+            new_card[k] = v
+      if new_card.text:
+         new_card.text += "\n\n" + c.text
+      else:
+         new_card.text = c.text
+   new_card.text = new_card.text.strip()
+   new_cid = holder.put(new_card)
+   print "new:", new_cid
+   for cid in args:
+      holder.delete(cid)
+
+def _parseaddr(mailaddr):
+   comment, addr = email.Utils.parseaddr(mailaddr)
+   parts = email.header.decode_header(comment)
+   name = ""
+   for data, encoding in parts:
+      if encoding:
+         name += data.decode(encoding)
+      else:
+         name += data
+   return name, addr
+
+def _insert(full_addr, holder):
+   if not full_addr: return
+   name, addr = _parseaddr(full_addr)
+   if not addr: return
+   found = holder.search(addr)
+   for cid in found:
+      card = holder.get(cid)
+      if addr in card.getAll("email"):
+         return # already in there
+   card = MCard()
+   if name:
+      card["name"] = name
+   card["email"] = addr
+   holder.put(card)
+   print "Added:", name, addr
+
+def do_import_maildir(args):
+   holder = CardHolder(_BASE)
+   maildir = os.path.abspath(args[0])
+   for p in iglob(maildir+"/*"):
+      mail = email.message_from_file(open(p))
+      _insert(mail["From"], holder)
+      _insert(mail["To"], holder)
 
 def main(args):
    cmd = args.pop(0)

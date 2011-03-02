@@ -22,11 +22,12 @@ class IndexedDatabase:
       self._indexBlob(blob, ids, extract=extract)
       return ids
    def get(self, ids):
+      assert not ids.endswith(".blob")
       return open(self._gen_path(ids)).read()
    def _gen_ids(self, string):
       return hashlib.sha256(string).hexdigest()
    def _gen_path(self, ids):
-      return os.path.join(path, ids+".blob")
+      return os.path.join(self.path, ids+".blob")
    def _storeBlob(self, blob, ids):
       tmppath = os.path.join(self.path, "_tmp_"+ids)
       fh = open(tmppath, 'w')
@@ -35,7 +36,7 @@ class IndexedDatabase:
       path = os.path.join(self.path, ids+".blob")
       os.rename(tmppath, path)
    def _indexBlob(self, blob, ids, extract):
-      self._delDocument(ids) # no duplicates!
+      self.delete(ids) # no duplicates!
       doc = xapian.Document()
       doc.add_term("Q"+ids)
       doc.set_data(ids)
@@ -53,7 +54,7 @@ class IndexedDatabase:
          raise KeyError("No document with id "+ids)
       doc = self._db.get_document(plitem.docid)
       return doc
-   def _delDocument(self, ids):
+   def delete(self, ids):
       self._db.delete_document("Q"+ids)
    def search(self, query, count=100):
       enquire = xapian.Enquire(self._db)
@@ -69,7 +70,7 @@ class IndexedDatabase:
          ids = m.document.get_data()
          path = self._gen_path(ids)
          if os.path.exists(path):
-            yield path
+            yield ids
          else:
             m.document.clear_values()
 

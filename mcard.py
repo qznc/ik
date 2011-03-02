@@ -69,6 +69,28 @@ def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
       last_key = key
    return MCard(props, text)
 
+class FakeFile:
+   def __init__(self, string):
+      self.string = string
+      self.i = 0
+   def readline(self):
+      s = i = self.i
+      while True:
+         if i==len(self.string):
+            return self.string[s:]
+         if self.string[i] == "\n":
+            self.i = i+1
+            return self.string[s:i]
+         i+=1
+
+def parse_string(string):
+   i = string.index("\n")
+   mt, version, encoding = string[:i].split()
+   version = int(version)
+   data = string[i+1:]
+   fdata = FakeFile(data)
+   return parse_file(fdata, version, encoding)
+
 class MCard:
    def __init__(self, props=None, text=""):
       if not props:
@@ -77,23 +99,22 @@ class MCard:
       self.text = text
    def __str__(self):
       string = u""
+      string += "mcard %d %s\n" % (VERSION, DEFAULT_ENCODING)
       for kv in self._props:
          string += "%s:%s\n" % kv
       string += "\n"
       string += self.text
-      return string
+      return string.encode(DEFAULT_ENCODING)
    def __getitem__(self, key):
+      key = key.encode("ascii")
       for k,v in self._props:
          if k == key:
             return v
-         elif k.startswith(key+","):
+      for k,v in self._props:
+         if k.startswith(key+","):
             return v
       raise KeyError(key)
    def __setitem__(self, key, value):
-      for kv in self._props:
-         if kv[0]==key:
-            kv[1] = value
-            return
       self._props.append((key,value))
    def get(self, key, default):
       try:
@@ -107,17 +128,4 @@ class MCard:
       for k,v in self._props:
          if k==key or k.startswith(key+","):
             yield v
-   def store(self, sdir):
-      string = self.__str__().encode(DEFAULT_ENCODING)
-      hsh = hashlib.sha256(string).hexdigest()
-      filename = hsh + ".mcard"
-      # create an temporary dot file
-      tmppath = os.path.join(sdir, "."+filename)
-      fh = open(tmppath, 'w')
-      fh.write("mcard %d %s\n" % (VERSION, DEFAULT_ENCODING))
-      fh.write(string)
-      fh.close()
-      path = os.path.join(sdir, filename)
-      os.rename(tmppath, path)
-      return path
 
