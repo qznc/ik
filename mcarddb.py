@@ -14,8 +14,10 @@ class CardHolder:
          yield cid
    def _complete(self, cid_start):
       cids = list(self._db.completeIds(cid_start))
-      if len(cids) != 1:
+      if len(cids) > 1:
          raise Exception("Ambiguous cid: "+cid_start)
+      elif len(cids) < 1:
+         raise Exception("Unknown cid: "+cid_start)
       return cids[0]
    def get(self,cid):
       cid = self._complete(cid)

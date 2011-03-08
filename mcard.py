@@ -19,7 +19,10 @@ email: Emailaddress in its shortest format as websites would accept it.
 phone: Phonenumber, usually in international format.
    ,business:
    ,private:
-post address: Usually street, house number, city, zip code, and country.
+address: Usually street, house number, city, zip code, and country.
+web: homepage, website, etc.
+   ,business:
+   ,private:
 gender: Usually male or female.
 portrait: URL of an portrait image.
 : Reuse the key before.

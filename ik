@@ -6,6 +6,7 @@ from glob import iglob
 
 from mcarddb import CardHolder
 from mcard import MCard
+import vcard
 
 _BASE="/home/beza1e1/dev/mycontacts/tests"
 _USAGE="""\
@@ -54,7 +55,7 @@ def _decode_name(string):
          name += data.decode(encoding)
       else:
          name += data
-   return name
+   return unicode(name)
 
 def _insert(name, addr, holder):
    if not addr: return
@@ -83,6 +84,17 @@ def do_import_maildir(args):
       addresses = email.utils.getaddresses(fields)
       for name,addr in addresses:
          _insert(name, addr, holder)
+
+def do_import_vcf(args):
+   vcfpath = args[0]
+   holder = CardHolder(_BASE)
+   for vc in vcard.read_file(vcfpath):
+      mc = vcard.vcard2mcard(vc)
+      for adr in mc.getAll("email"):
+         results = list(holder.search(adr))
+         if results:
+            print "already!", adr, results
+      holder.put(mc)
 
 def main(args):
    cmd = args.pop(0)
