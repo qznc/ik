@@ -27,7 +27,8 @@ class CardHolder:
          indexer.index_text(card.text)
          for k,v in card.items():
             indexer.index_text(v)
-      return self._db.put(str(card), extract=extract)
+      cid = self._db.put(str(card), extract=extract)
+      return cid
    def delete(self, cid):
       cid = self._complete(cid)
       self._db.delete(cid)

@@ -28,10 +28,10 @@ class IndexedDatabase:
       assert not ids.endswith(".blob")
       return open(self._gen_path(ids)).read()
    def completeIds(self, ids_start):
-      for path in iglob(self._gen_path("*")):
+      assert ids_start
+      for path in iglob(self._gen_path(ids_start+"*")):
          cid = os.path.basename(path)[:-5]
-         if cid.startswith(ids_start):
-            yield cid
+         yield cid
    def _gen_ids(self, string):
       return hashlib.sha256(string).hexdigest()
    def _gen_path(self, ids):
@@ -44,7 +44,7 @@ class IndexedDatabase:
       path = os.path.join(self.path, ids+".blob")
       os.rename(tmppath, path)
    def _indexBlob(self, blob, ids, extract):
-      self.delete(ids) # no duplicates!
+      self._deleteFromIndex(ids) # no duplicates!
       doc = xapian.Document()
       assert len("Q"+ids) <= 245 # xapian restriction
       doc.add_term("Q"+ids)
@@ -55,6 +55,8 @@ class IndexedDatabase:
       indexer.set_document(doc)
       extract(indexer, blob) # actual indexing in there
       self._db.add_document(doc)
+   def _deleteFromIndex(self, ids):
+      self._db.delete_document("Q"+ids)
    def _getDocument(self, ids):
       postlist = self._db.postlist("Q"+ids)
       try:
@@ -64,7 +66,8 @@ class IndexedDatabase:
       doc = self._db.get_document(plitem.docid)
       return doc
    def delete(self, ids):
-      self._db.delete_document("Q"+ids)
+      self._deleteFromIndex(ids)
+      os.remove(self._gen_path(ids))
    def search(self, query, count=100):
       enquire = xapian.Enquire(self._db)
       qp = xapian.QueryParser()
@@ -81,7 +84,7 @@ class IndexedDatabase:
          if os.path.exists(path):
             yield ids
          else:
-            m.document.clear_values()
+            self._deleteFromIndex(ids)
 
 if __name__ == "__main__":
    path = os.path.abspath("blob_testing")

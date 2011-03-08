@@ -29,10 +29,12 @@ def do_show(args):
    holder = CardHolder(_BASE, readonly=True)
    print holder.get(args[0])
 
-def do_merge(args):
+def _merge(cids, holder):
+   assert len(cids) > 1
+   for cid in cids:
+      holder.get(cid)
    new_card = MCard()
-   holder = CardHolder(_BASE)
-   for cid in args:
+   for cid in cids:
       c = holder.get(cid)
       for k,v in list(c.items()):
          if new_card.get(k, None) != v:
@@ -43,9 +45,15 @@ def do_merge(args):
          new_card.text = c.text
    new_card.text = new_card.text.strip()
    new_cid = holder.put(new_card)
+   for cid in cids:
+      if cid != new_cid:
+         holder.delete(cid)
+   return new_cid
+
+def do_merge(args):
+   holder = CardHolder(_BASE)
+   new_cid = _merge(args, holder)
    print "new:", new_cid
-   for cid in args:
-      holder.delete(cid)
 
 def _decode_name(string):
    parts = email.header.decode_header(string)
@@ -90,11 +98,14 @@ def do_import_vcf(args):
    holder = CardHolder(_BASE)
    for vc in vcard.read_file(vcfpath):
       mc = vcard.vcard2mcard(vc)
+      cid = holder.put(mc)
+      # try to merge with already existing contacts:
+      m = set([cid])
       for adr in mc.getAll("email"):
-         results = list(holder.search(adr))
-         if results:
-            print "already!", adr, results
-      holder.put(mc)
+         results = set(holder.search(adr))
+         m.update(results)
+      if len(m) > 1:
+         _merge(m,holder)
 
 def main(args):
    cmd = args.pop(0)
