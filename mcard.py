@@ -58,19 +58,19 @@ def _parse_line(line, last=None):
 def parse_file(f, version=VERSION, encoding=DEFAULT_ENCODING):
    last_key = None
    text = ""
-   props = list()
+   card = MCard()
    while True:
       line = f.readline().decode(encoding)
       if not line: break
       key,value = _parse_line(line, last=last_key)
       if not key:
          assert(value is None)
-         text = f.read().decode(encoding).strip()
+         card.text = f.read().decode(encoding).strip()
          break
       else:
-         props.append((key, value))
+         card[key] = value
       last_key = key
-   return MCard(props, text)
+   return card
 
 class FakeFile:
    def __init__(self, string):
@@ -97,13 +97,15 @@ def parse_string(string):
 class MCard:
    def __init__(self, props=None, text=""):
       if not props:
-         props = list()
+         props = set()
       self._props = props
       self.text = text
    def __str__(self):
       string = u""
       string += "mcard %d %s\n" % (VERSION, DEFAULT_ENCODING)
-      for kv in self._props:
+      ps = list(self._props)
+      ps.sort()
+      for kv in ps:
          string += "%s:%s\n" % kv
       string += "\n"
       string += self.text
@@ -118,7 +120,7 @@ class MCard:
             return v
       raise KeyError(key)
    def __setitem__(self, key, value):
-      self._props.append((key,value))
+      self._props.add((key,value))
    def get(self, key, default):
       try:
          return self.__getitem__(key)
