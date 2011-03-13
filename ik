@@ -8,7 +8,7 @@ from mcarddb import CardHolder
 from mcard import MCard
 import vcard
 
-_BASE="/home/beza1e1/dev/mycontacts/tests"
+_BASE="/home/beza1e1/dev/ik/tests"
 _USAGE="""\
 Usage: %s <cmd> ...
 where <cmd> is one of: search, show, merge, import-maildir
@@ -106,6 +106,16 @@ def do_import_vcf(args):
          m.update(results)
       if len(m) > 1:
          _merge(m,holder)
+
+def do_export_shelve(args):
+   outpath = args[0]
+   import shelve
+   outdb = shelve.open(outpath)
+   holder = CardHolder(_BASE)
+   for cid in holder:
+      card = holder.get(cid)
+      outdb[cid] = card
+   outdb.close()
 
 def main(args):
    cmd = args.pop(0)

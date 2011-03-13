@@ -85,6 +85,10 @@ class FakeFile:
             self.i = i+1
             return self.string[s:i]
          i+=1
+   def read(self):
+      d = self.string[self.i:]
+      self.i = len(self.string)
+      return d
 
 def parse_string(string):
    i = string.index("\n")

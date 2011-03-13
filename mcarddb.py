@@ -9,6 +9,8 @@ class CardHolder:
    def __init__(self,path,readonly=False):
       self.path = path
       self._db = IndexedDatabase(path,readonly=readonly)
+   def __iter__(self):
+      return self._db.__iter__()
    def search(self,query):
       for cid in self._db.search(query):
          yield cid

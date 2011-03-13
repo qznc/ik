@@ -85,6 +85,10 @@ class IndexedDatabase:
             yield ids
          else:
             self._deleteFromIndex(ids)
+   def __iter__(self):
+      for path in iglob(self._gen_path("*")):
+         cid = os.path.basename(path)[:-5]
+         yield cid
 
 if __name__ == "__main__":
    path = os.path.abspath("blob_testing")
