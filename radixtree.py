@@ -23,7 +23,10 @@ class radixdict:
                key_rest_new = key[len(common_key):]
                key_rest_old = k  [len(common_key):]
                sub = radixdict()
-               sub._subtrees.append((key_rest_old, subtree))
+               if key_rest_old:
+                  sub._subtrees.append((key_rest_old, subtree))
+               else:
+                  sub._items.extend(subtree._items)
                sub.insert(key_rest_new,item)
                self._subtrees.append((common_key,sub))
                # remove obsolete stuff
