@@ -117,6 +117,28 @@ def do_export_shelve(args):
       outdb[cid] = card
    outdb.close()
 
+def do_export_iff(args):
+   from iff import KeyIndexer, as_chunk
+   ki = KeyIndexer()
+   end_key = ki.getIndex(" ")
+   assert end_key == 0
+   data = ""
+   holder = CardHolder(_BASE)
+   for cid in holder:
+      card = holder.get(cid)
+      for k,v in card.items():
+         i = ki.getIndex(k.encode("utf8"))
+         data += chr(i)
+         data += v.encode("utf8")
+         data += "\0"
+      data += chr(end_key)
+   contacts = as_chunk("MCRD", data)
+   keys = as_chunk("KEYS", ki.binary())
+   full = as_chunk("FORM", keys+contacts)
+   out = open(args[0], 'w')
+   out.write(full)
+   out.close()
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
