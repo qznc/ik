@@ -45,7 +45,7 @@ def load_file(path):
 
 def _parse_line(line, last=None):
    try:
-      i = line.rindex(":")
+      i = line.index(":")
    except ValueError:
       return None, None
    key = line[:i].strip()
