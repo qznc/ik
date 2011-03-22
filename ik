@@ -139,6 +139,24 @@ def do_export_iff(args):
    out.write(full)
    out.close()
 
+def do_my_index(args):
+   cards = list()
+   holder = CardHolder(_BASE)
+   for cid in holder:
+      card = holder.get(cid)
+      cards.append(card)
+   from radixtree import radixdict
+   from time import time
+   d = radixdict()
+   start = time()
+   for card in cards:
+      for k,v in card.items():
+         for vp in v.split():
+            d.insert(vp,card)
+      for word in card.text.split():
+         d.insert(word,card)
+   print "everything indexed in", time() - start, "seconds"
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
