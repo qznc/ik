@@ -32,7 +32,7 @@ def do_show(args):
    res = ncards.read(fh)
    for card in ncards.read(fh):
       if card.id == index:
-         print card
+         print card.__str__().encode("utf8")
    fh.close()
 
 def do_merge(args):
