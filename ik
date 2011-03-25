@@ -107,21 +107,17 @@ def do_import_vcf(args):
          _merge(m,holder)
 
 def do_my_index(args):
-   cards = list()
-   holder = CardHolder(_BASE)
-   for cid in holder:
-      card = holder.get(cid)
-      cards.append(card)
+   fh = open(_DBFILE)
+   cards = list(ncards.read(fh))
+   fh.close()
    from radixtree import radixdict
    from time import time
    d = radixdict()
    start = time()
    for card in cards:
-      for k,v in card.items():
+      for k,v in card:
          for vp in v.split():
             d.insert(vp,card)
-      for word in card.text.split():
-         d.insert(word,card)
    print "everything indexed in", time() - start, "seconds"
 
 def main(args):
