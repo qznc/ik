@@ -74,14 +74,7 @@ def _extract_maildir_addresses(maildir):
       for x in addresses:
          yield x
 
-def do_import_maildir(args):
-   cards = list()
-   maildir = os.path.abspath(args[0])
-   for name,addr in _extract_maildir_addresses(maildir):
-      card = NCard()
-      card.add("name", _decode_name(name))
-      card.add("email", addr.decode("ascii", "ignore"))
-      cards.append(card)
+def _insert(cards):
    fh = open(_DBFILE)
    original = list(ncards.read(fh))
    fh.close()
@@ -90,9 +83,18 @@ def do_import_maildir(args):
    ncards.save(fh, cards)
    fh.close()
 
+def do_import_maildir(args):
+   cards = list()
+   maildir = os.path.abspath(args[0])
+   for name,addr in _extract_maildir_addresses(maildir):
+      card = NCard()
+      card.add("name", _decode_name(name))
+      card.add("email", addr.decode("ascii", "ignore"))
+      cards.append(card)
+   _insert(cards)
+
 def do_import_vcf(args):
    vcfpath = args[0]
-   holder = CardHolder(_BASE)
    for vc in vcard.read_file(vcfpath):
       mc = vcard.vcard2mcard(vc)
       cid = holder.put(mc)
