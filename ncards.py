@@ -55,17 +55,40 @@ def search(cards, query):
             yield card
             break # next card
 
-def remove(cards, ids):
+def remove(lst, ids):
+   """Remove indices ids from card list lst"""
    # remove in reverse order to not change the indexes
    ids = sorted(map(int,ids),reverse=True)
    for id in ids:
-      c = cards.pop(id)
+      c = lst.pop(id)
       assert c.id == id
 
 def merge(cards):
+   """Merge a list of cards into one card"""
    new = NCard()
    for c in cards:
       for k,v in c:
          new.add(k,v)
    return new
+
+def insert(cards1, cards2):
+   """Merges both card lists and tries to merge individual cards in the process.
+   cards2 is modified!"""
+   result = list()
+   # append all c1, but try to merge them before
+   for c1 in cards1:
+      matched = list()
+      card = c1
+      for c2 in cards2:
+         if c1.matches(c2):
+            matched.append(c2)
+            card = merge([card,c2])
+      if matched:
+         for c2 in matched:
+            cards2.remove(c2)
+      result.append(card)
+   # append remaining c2
+   for c2 in cards2:
+      result.append(c2)
+   return result
 

@@ -4,10 +4,9 @@ import os
 import email.header
 from glob import iglob
 
-from mcarddb import CardHolder
-from mcard import MCard
 import vcard
 import ncards
+from ncard import NCard
 
 _DBFILE="contacts.ciff"
 _USAGE="""\
@@ -56,11 +55,15 @@ def _decode_name(string):
       if encoding:
          name += data.decode(encoding)
       else:
-         name += data
-   return unicode(name)
+         name += data.decode("ascii", "ignore")
+   name = unicode(name)
+   for c in u"\"'":
+      if name.startswith(c) and name.endswith(c):
+         name = name[1:-1]
+   name = name.replace("  ", " ")
+   return name
 
-def do_import_maildir(args):
-   maildir = os.path.abspath(args[0])
+def _extract_maildir_addresses(maildir):
    for p in iglob(maildir+"/*"):
       mail = email.message_from_file(open(p))
       fields = list()
@@ -68,8 +71,24 @@ def do_import_maildir(args):
          if mail[f]:
             fields.append(mail[f])
       addresses = email.utils.getaddresses(fields)
-      for name,addr in addresses:
-         _insert(name, addr, holder)
+      for x in addresses:
+         yield x
+
+def do_import_maildir(args):
+   cards = list()
+   maildir = os.path.abspath(args[0])
+   for name,addr in _extract_maildir_addresses(maildir):
+      card = NCard()
+      card.add("name", _decode_name(name))
+      card.add("email", addr.decode("ascii", "ignore"))
+      cards.append(card)
+   fh = open(_DBFILE)
+   original = list(ncards.read(fh))
+   fh.close()
+   cards = ncards.insert(original[:], cards)
+   fh = open(_DBFILE, 'w')
+   ncards.save(fh, cards)
+   fh.close()
 
 def do_import_vcf(args):
    vcfpath = args[0]
