@@ -49,9 +49,7 @@ def search(cards, query):
    """Yield the cards matching the query"""
    for card in cards:
       for k,v in card:
-         if not isinstance(v,unicode):
-            continue
-         if query in v:
+         if query.lower() in v.lower():
             yield card
             break # next card
 
