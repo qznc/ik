@@ -159,6 +159,12 @@ def do_edit(args):
    ncards.save(fh, cards)
    fh.close()
 
+def do_count(args):
+   fh = open(_DBFILE)
+   cards = list(ncards.read(fh))
+   fh.close()
+   print len(cards), "contacts"
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
