@@ -24,7 +24,7 @@ def read(fh):
          cc = NCard()
       else:
          end = data.index("\0", pos)
-         cc.append((key, data[pos:end].decode("utf8")))
+         cc.add(key, data[pos:end].decode("utf8"))
          pos = end+1
 
 def save(fh, cards):

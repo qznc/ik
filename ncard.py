@@ -5,6 +5,7 @@ class NCard(list):
             return v
       return default
    def add(self, key, value):
+      if not value: return
       for k,v in self:
          if k==key and v==value:
             return
