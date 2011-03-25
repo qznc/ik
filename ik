@@ -11,7 +11,7 @@ from ncard import NCard
 _DBFILE="contacts.ciff"
 _USAGE="""\
 Usage: %s <cmd> ...
-where <cmd> is one of: search, show, merge, import-maildir
+where <cmd> is one of: search, show, merge, edit, import-maildir
 """ % sys.argv[0]
 
 def do_search(args):
@@ -120,6 +120,45 @@ def do_my_index(args):
             d.insert(vp,card)
    print "everything indexed in", time() - start, "seconds"
 
+def _user_edit(card):
+   # serialize
+   string = ""
+   for k,v in card:
+      string += "%s: %s\n" % (k,v)
+   # let the user edit
+   from tempfile import mkstemp
+   i, path = mkstemp(".txt", "edit")
+   fh = open(path, 'w')
+   fh.write(string.encode("utf8"))
+   fh.close()
+   os.system("vim %s" % path)
+   fh = open(path)
+   # parse
+   new_card = NCard()
+   for line in fh:
+      if not line: continue
+      line = line.decode("utf8")
+      i = line.index(":")
+      key = line[:i].strip()
+      value = line[i+1:].strip()
+      new_card.add(key,value)
+   return new_card
+
+def do_edit(args):
+   index = int(args[0])
+   fh = open(_DBFILE)
+   cards = list(ncards.read(fh))
+   fh.close()
+   for card in cards:
+      if card.id == index:
+         break
+   cards.remove(card)
+   new_card = _user_edit(card)
+   cards.append(new_card)
+   fh = open(_DBFILE, 'w')
+   ncards.save(fh, cards)
+   fh.close()
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
@@ -129,7 +168,6 @@ def main(args):
       print _USAGE
       return
    func(args)
-
 
 if __name__ == "__main__":
    main(sys.argv[1:])
