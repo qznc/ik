@@ -7,53 +7,47 @@ from glob import iglob
 from mcarddb import CardHolder
 from mcard import MCard
 import vcard
+import ncards
 
-_BASE="/home/beza1e1/dev/ik/tests"
+_DBFILE="contacts.ciff"
 _USAGE="""\
 Usage: %s <cmd> ...
 where <cmd> is one of: search, show, merge, import-maildir
 """ % sys.argv[0]
 
 def do_search(args):
-   query = " ".join(args)
-   holder = CardHolder(_BASE, readonly=True)
-   results = holder.search(query)
-   for cid in results:
-      card = holder.get(cid)
-      name = card.get("name", None)
+   fh = open(_DBFILE)
+   res = list(ncards.read(fh))
+   fh.close()
+   for query in args:
+      res = ncards.search(res, query)
+   for card in res:
+      name = card.get("name")
       if not name:
          name = card.get("email", "?")
-      print cid, name
+      print "%5d %s" % (card.id, name)
 
 def do_show(args):
-   holder = CardHolder(_BASE, readonly=True)
-   print holder.get(args[0])
-
-def _merge(cids, holder):
-   assert len(cids) > 1
-   for cid in cids:
-      holder.get(cid)
-   new_card = MCard()
-   for cid in cids:
-      c = holder.get(cid)
-      for k,v in list(c.items()):
-         if new_card.get(k, None) != v:
-            new_card[k] = v
-      if new_card.text:
-         new_card.text += "\n\n" + c.text
-      else:
-         new_card.text = c.text
-   new_card.text = new_card.text.strip()
-   new_cid = holder.put(new_card)
-   for cid in cids:
-      if cid != new_cid:
-         holder.delete(cid)
-   return new_cid
+   index = int(args[0])
+   fh = open(_DBFILE)
+   res = ncards.read(fh)
+   for card in ncards.read(fh):
+      if card.id == index:
+         print card
+   fh.close()
 
 def do_merge(args):
-   holder = CardHolder(_BASE)
-   new_cid = _merge(args, holder)
-   print "new:", new_cid
+   fh = open(_DBFILE)
+   cards = list(ncards.read(fh))
+   fh.close()
+   ids = map(int,args)
+   mergeset = [c for c in cards if c.id in ids]
+   new = ncards.merge(mergeset)
+   ncards.remove(cards, ids)
+   cards.append(new)
+   fh = open(_DBFILE, 'w')
+   ncards.save(fh, cards)
+   fh.close()
 
 def _decode_name(string):
    parts = email.header.decode_header(string)
@@ -65,23 +59,7 @@ def _decode_name(string):
          name += data
    return unicode(name)
 
-def _insert(name, addr, holder):
-   if not addr: return
-   found = holder.search(addr)
-   for cid in found:
-      card = holder.get(cid)
-      if addr in card.getAll("email"):
-         return # already in there
-   card = MCard()
-   if name:
-      name = _decode_name(name)
-      card["name"] = name
-   card["email"] = addr
-   holder.put(card)
-   print "Added:", name, addr
-
 def do_import_maildir(args):
-   holder = CardHolder(_BASE)
    maildir = os.path.abspath(args[0])
    for p in iglob(maildir+"/*"):
       mail = email.message_from_file(open(p))
@@ -106,38 +84,6 @@ def do_import_vcf(args):
          m.update(results)
       if len(m) > 1:
          _merge(m,holder)
-
-def do_export_shelve(args):
-   outpath = args[0]
-   import shelve
-   outdb = shelve.open(outpath)
-   holder = CardHolder(_BASE)
-   for cid in holder:
-      card = holder.get(cid)
-      outdb[cid] = card
-   outdb.close()
-
-def do_export_iff(args):
-   from iff import KeyIndexer, as_chunk
-   ki = KeyIndexer()
-   end_key = ki.getIndex(" ")
-   assert end_key == 0
-   data = ""
-   holder = CardHolder(_BASE)
-   for cid in holder:
-      card = holder.get(cid)
-      for k,v in card.items():
-         i = ki.getIndex(k.encode("utf8"))
-         data += chr(i)
-         data += v.encode("utf8")
-         data += "\0"
-      data += chr(end_key)
-   contacts = as_chunk("MCRD", data)
-   keys = as_chunk("KEYS", ki.binary())
-   full = as_chunk("FORM", keys+contacts)
-   out = open(args[0], 'w')
-   out.write(full)
-   out.close()
 
 def do_my_index(args):
    cards = list()

@@ -39,4 +39,3 @@ def read_iff(fh,keys=["FORM"]):
       else:
          data = ch.read(ch.getsize())
          yield name, data
-      ch.skip()
