@@ -166,6 +166,13 @@ def do_count(args):
    fh.close()
    print len(cards), "contacts"
 
+def do_new(args):
+   card = NCard()
+   card.add("name", "John Doe")
+   card.add("email", "john@doe.com")
+   card = _user_edit(card)
+   _insert([card])
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
