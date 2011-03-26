@@ -28,7 +28,7 @@ def as_chunk(type,data):
 def read_iff(fh,keys=["FORM"]):
    while True:
       try:
-         ch = Chunk(fh)
+         ch = Chunk(fh, align=False)
       except EOFError:
          return
       name = ch.getname()
