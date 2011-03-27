@@ -33,7 +33,7 @@ def read_iff(fh,keys=["FORM"]):
          return
       name = ch.getname()
       if name == "FORM":
-         ch.seek(0)
+         typ = ch.read(4) # TODO return somehow
          for x in read_iff(ch):
             yield x
       else:

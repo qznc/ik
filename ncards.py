@@ -42,7 +42,7 @@ def save(fh, cards):
       data += chr(end_key)
    contacts = as_chunk("MCRD", data)
    keys = as_chunk("KEYS", ki.binary())
-   full = as_chunk("FORM", keys+contacts)
+   full = as_chunk("FORM", "NTCT"+keys+contacts)
    fh.write(full)
 
 def search(cards, query):
