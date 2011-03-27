@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 from ncard import NCard
-from iff import read_iff, KeyIndexer, as_chunk
+from iff import read_iff, as_chunk
+
+class KeyIndexer:
+   def __init__(self):
+      self.keys = list()
+   def getIndex(self, key):
+      for i,k in enumerate(self.keys):
+         if k==key:
+            return i
+      i = len(self.keys)
+      self.keys.append(key)
+      return i
+   def binary(self):
+      data = ""
+      for k in self.keys:
+         data += k
+         data += "\0"
+      return data
 
 def read(fh):
    """Yields all cards read from a file"""
