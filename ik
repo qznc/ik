@@ -173,6 +173,14 @@ def do_new(args):
    card = _user_edit(card)
    _insert([card])
 
+def do_curses(args):
+   from ui_ncurses import CursesUI
+   fh = open(_DBFILE)
+   cards = list(ncards.read(fh))
+   fh.close()
+   ui = CursesUI(cards)
+   ui.start()
+
 def main(args):
    cmd = args.pop(0)
    cmd = cmd.replace("-", "_")
