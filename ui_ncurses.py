@@ -29,6 +29,24 @@ def draw(screen, string, cards, pos):
       curses.curs_set(0)
    screen.refresh()
 
+def show_card(screen, card):
+   my, mx = screen.getmaxyx()
+   keylen = 0
+   count = 0
+   for k,v in card:
+      keylen = max(keylen, len(k)+2)
+      count = min(my-6,count+1)
+   win = screen.subwin(count+2,mx-6,2,3)
+   win.addstr(0,0,"")
+   win.erase()
+   y,x = win.getyx()
+   y += 1
+   win.border(0)
+   for k,v in list(card)[:count]:
+      win.addstr(y,1,k)
+      win.addstr(y,keylen,v.encode("utf8"))
+      y += 1
+
 def search(string, cards):
    res = cards
    for query in string.split():
@@ -53,7 +71,7 @@ def app(screen, all_cards):
             selected = min(my-2, selected+1)
          elif ch == curses.KEY_UP:
             selected = max(0, selected-1)
-         elif ch == ENTER:
+         elif ch == ENTER and selected == 0:
             selected = 1
          elif selected == 0: # search string entering
             assert 13 < ch < 256
@@ -70,6 +88,8 @@ def app(screen, all_cards):
          ustring = string.decode("utf8")[:20]
          cards = search(ustring, all_cards)
          draw(screen, ustring, cards, selected)
+         if ch == ENTER and selected > 0:
+            show_card(screen, cards[-selected+1])
    except KeyboardInterrupt:
       pass
 
