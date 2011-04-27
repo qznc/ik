@@ -68,7 +68,7 @@ def app(screen, all_cards):
          elif ch == curses.KEY_BACKSPACE:
             string = string.decode(encoding)[:-1].encode(encoding)
          elif ch == curses.KEY_DOWN:
-            selected = min(my-2, selected+1)
+            selected = min(my-2, selected+1, len(cards))
          elif ch == curses.KEY_UP:
             selected = max(0, selected-1)
          elif ch == ENTER and selected == 0:
