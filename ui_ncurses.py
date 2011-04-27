@@ -83,6 +83,8 @@ def app(screen, all_cards):
                continue
          elif chr(ch) in "sS":
             selected = 0
+         elif chr(ch) in "qQxX":
+            break
          else:
             pass # TODO
          ustring = string.decode("utf8")[:20]
