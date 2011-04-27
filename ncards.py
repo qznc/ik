@@ -64,9 +64,10 @@ def save(fh, cards):
 
 def search(cards, query):
    """Yield the cards matching the query"""
+   query = query.lower()
    for card in cards:
       for k,v in card:
-         if query.lower() in v.lower():
+         if query in v.lower():
             yield card
             break # next card
 

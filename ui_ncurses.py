@@ -8,11 +8,14 @@ ENTER = ord("\n")
 
 def draw(screen, string, cards):
    my, mx = screen.getmaxyx()
-   for i in range(1,my-1):
+   for i in range(0,my-2):
       if i < len(cards):
          card = cards[-i]
-         line = card.get("name", u"").encode("utf8")
-         screen.addstr(i, 1, line+"\n")
+         name = card.get("name")
+         if not name:
+            name = card.get("email", "?")
+         line = name.encode("utf8")
+         screen.addstr(i+1, 1, line+"\n")
       else:
          screen.addstr("\n")
    screen.addstr(0, 0, "\n") # clear line
