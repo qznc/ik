@@ -1,0 +1,8 @@
+ik
+==
+
+A command-line address book application.
+
+However, this one is not intended for mutt (so far). The idea is to optimize
+for importing and merging, since these are the interesting jobs, when you
+have to manage thousands of contacts.
